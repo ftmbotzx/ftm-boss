@@ -1,0 +1,288 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BKNMU Notifications - FTM Boss Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .stat-card h3 {
+            color: #667eea;
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+        
+        .stat-card p {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .notifications-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            padding: 30px;
+        }
+        
+        .notifications-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .notifications-header h2 {
+            color: #333;
+        }
+        
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.3s;
+        }
+        
+        .refresh-btn:hover {
+            background: #764ba2;
+        }
+        
+        .notification-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .notification-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .notification-title {
+            font-size: 1.2em;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .notification-translation {
+            font-size: 1em;
+            color: #666;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            font-style: italic;
+        }
+        
+        .notification-meta {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            font-size: 0.9em;
+            color: #888;
+        }
+        
+        .notification-meta span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #667eea;
+            font-size: 1.2em;
+        }
+        
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .empty {
+            text-align: center;
+            padding: 50px;
+            color: #999;
+            font-size: 1.1em;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .notifications-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 FTM Boss Assistant</h1>
+            <p>BKNMU Notifications with English Translations</p>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <h3 id="total-count">-</h3>
+                <p>Total Notifications</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="last-updated">-</h3>
+                <p>Last Updated</p>
+            </div>
+        </div>
+        
+        <div class="notifications-container">
+            <div class="notifications-header">
+                <h2>Recent Notifications</h2>
+                <button class="refresh-btn" onclick="loadNotifications()">🔄 Refresh</button>
+            </div>
+            <div id="notifications-list">
+                <div class="loading">Loading notifications...</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function formatDate(dateStr) {
+            if (!dateStr) return 'N/A';
+            try {
+                const date = new Date(dateStr);
+                return date.toLocaleDateString('en-IN', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (e) {
+                return dateStr;
+            }
+        }
+        
+        function loadNotifications() {
+            const listElement = document.getElementById('notifications-list');
+            listElement.innerHTML = '<div class="loading">Loading notifications...</div>';
+            
+            fetch('/api/notifications')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.success) {
+                        throw new Error(data.error || 'Failed to load notifications');
+                    }
+                    
+                    // Update stats
+                    document.getElementById('total-count').textContent = data.count;
+                    document.getElementById('last-updated').textContent = new Date().toLocaleTimeString('en-IN');
+                    
+                    if (data.notifications.length === 0) {
+                        listElement.innerHTML = '<div class="empty">No notifications found</div>';
+                        return;
+                    }
+                    
+                    // Display notifications
+                    let html = '';
+                    data.notifications.forEach(notif => {
+                        html += `
+                            <div class="notification-item">
+                                <div class="notification-title">📢 ${notif.title || 'Untitled'}</div>
+                                ${notif.title_en ? `
+                                    <div class="notification-translation">
+                                        🌐 ${notif.title_en}
+                                    </div>
+                                ` : ''}
+                                <div class="notification-meta">
+                                    <span>📅 ${notif.date || 'N/A'}</span>
+                                    <span>🏷️ ${notif.type || 'General'}</span>
+                                    <span>⏰ ${formatDate(notif.processed_at)}</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    listElement.innerHTML = html;
+                })
+                .catch(error => {
+                    console.error('Error loading notifications:', error);
+                    listElement.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+                });
+        }
+        
+        // Load notifications on page load
+        loadNotifications();
+        
+        // Auto-refresh every 2 minutes
+        setInterval(loadNotifications, 120000);
+    </script>
+</body>
+</html>
